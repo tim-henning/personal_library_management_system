@@ -4,15 +4,8 @@ import models.Book;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class Library {
-
-    private final ArrayList<Book> books;
-
-    public Library () {
-        books = new ArrayList<>();
-    }
 
     public void addBook(Book book) {
         //Get a connection to the database
@@ -98,12 +91,33 @@ public class Library {
     }
 
     public void displayBooks() {
-        if(books.isEmpty()) {
-            System.out.println("No books in the library!");
-        } else {
-            for(Book b : books) {
-                System.out.println(b);
+        Connection conn = DatabaseManager.connect();
+        if (conn == null) {
+            System.out.println("Database connection failed!");
+            return;
+        }
+
+        String sql = "SELECT * FROM books";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            boolean hasBooks = false;
+
+            while (rs.next()) {
+                hasBooks = true;
+                String title = rs.getString("title");
+                String author = rs.getString("author");
+                String isbn = rs.getString("isbn");
+
+                System.out.println("Title: " + title + ", Author: " + author + ", ISBN: " + isbn);
             }
+
+            if (!hasBooks) {
+                System.out.println("No books in the library!");
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error retrieving books: " + e.getMessage());
         }
     }
 }
