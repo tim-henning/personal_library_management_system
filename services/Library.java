@@ -4,15 +4,8 @@ import models.Book;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class Library {
-
-    private final ArrayList<Book> books;
-
-    public Library () {
-        books = new ArrayList<>();
-    }
 
     public void addBook(Book book) {
         //Get a connection to the database
@@ -75,12 +68,12 @@ public class Library {
             return new ArrayList<>();
         }
 
-        String sql = "SELECT * FROM books WHERE title = ?";
+        String sql = "SELECT * FROM books WHERE title LIKE ?";
 
         ArrayList<Book> searchResults = new ArrayList<>();
 
         try(PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, title);
+            pstmt.setString(1, "%" + title + "%");
 
             ResultSet rs = pstmt.executeQuery();
 
@@ -97,13 +90,40 @@ public class Library {
         return searchResults;
     }
 
-    public void displayBooks() {
-        if(books.isEmpty()) {
-            System.out.println("No books in the library!");
-        } else {
-            for(Book b : books) {
-                System.out.println(b);
-            }
+    public String displayBooks() {
+        Connection conn = DatabaseManager.connect();
+        if (conn == null) {
+            System.out.println("Database connection failed!");
+            return null;
         }
+
+        String sql = "SELECT * FROM books";
+        StringBuilder bookList = new StringBuilder();
+        try (PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            boolean hasBooks = false;
+
+            while (rs.next()) {
+                hasBooks = true;
+                String title = rs.getString("title");
+                String author = rs.getString("author");
+                String isbn = rs.getString("isbn");
+
+                bookList.append("Title: ").append(title)
+                        .append(", Author: ").append(author)
+                        .append(", ISBN: ").append(isbn)
+                        .append("\n");
+            }
+
+            if (!hasBooks) {
+                System.out.println("No books in the library!");
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error retrieving books: " + e.getMessage());
+        }
+
+        return bookList.toString();
     }
 }
