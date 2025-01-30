@@ -68,12 +68,12 @@ public class Library {
             return new ArrayList<>();
         }
 
-        String sql = "SELECT * FROM books WHERE title = ?";
+        String sql = "SELECT * FROM books WHERE title LIKE ?";
 
         ArrayList<Book> searchResults = new ArrayList<>();
 
         try(PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, title);
+            pstmt.setString(1, "%" + title + "%");
 
             ResultSet rs = pstmt.executeQuery();
 
@@ -90,14 +90,15 @@ public class Library {
         return searchResults;
     }
 
-    public void displayBooks() {
+    public String displayBooks() {
         Connection conn = DatabaseManager.connect();
         if (conn == null) {
             System.out.println("Database connection failed!");
-            return;
+            return null;
         }
 
         String sql = "SELECT * FROM books";
+        StringBuilder bookList = new StringBuilder();
         try (PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
 
@@ -109,7 +110,10 @@ public class Library {
                 String author = rs.getString("author");
                 String isbn = rs.getString("isbn");
 
-                System.out.println("Title: " + title + ", Author: " + author + ", ISBN: " + isbn);
+                bookList.append("Title: ").append(title)
+                        .append(", Author: ").append(author)
+                        .append(", ISBN: ").append(isbn)
+                        .append("\n");
             }
 
             if (!hasBooks) {
@@ -119,5 +123,7 @@ public class Library {
         } catch (SQLException e) {
             System.out.println("Error retrieving books: " + e.getMessage());
         }
+
+        return bookList.toString();
     }
 }
